@@ -43,7 +43,7 @@ def process_image():
         'guidance': 15,
         'output_format': 'jpg',
         'safety_tolerance': 2,
-        'prompt_upsampling': 'true'
+        'prompt_upsampling': 'false'
     }
 
     # Файлы для отправки

@@ -137,7 +137,7 @@ class ImageEditorApp:
 
         try:
             messagebox.showinfo("Обработка", "Изображение отправлено на сервер. Подождите...")
-            response = requests.post(self.server_url, data=data, files=files, timeout=300)
+            response = requests.post(self.server_url, data=data, files=files, timeout=400)
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             messagebox.showerror("Ошибка", f"Не удалось отправить запрос: {e}")

@@ -36,9 +36,9 @@ def process_image():
     # Подготовка данных для отправки в flux-canny-pro
     data_form = {
         'seed': seed,
-        'steps': 50,  # Увеличенные шаги для более качественного результата
+        'steps': 40,  # Увеличенные шаги для более качественного результата
         'prompt': prompt,
-        'guidance': 20,  # Оптимальное значение для строгого следования prompt
+        'guidance': 30,  # Оптимальное значение для строгого следования prompt
         'output_format': 'jpg',
         'safety_tolerance': 2,
         'prompt_upsampling': True  # Используем логическое значение, а не строку

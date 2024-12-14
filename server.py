@@ -2,6 +2,7 @@ from flask import Flask, request, send_file
 from PIL import Image
 import io
 import requests
+import random
 
 app = Flask(__name__)
 
@@ -11,44 +12,40 @@ SEGMIND_ENDPOINT = "https://api.segmind.com/v1/flux-canny-pro"
 @app.route('/process_image', methods=['POST'])
 def process_image():
     # Проверяем наличие данных от клиента
-    if 'image' not in request.files or 'control_image' not in request.files or 'prompt' not in request.form:
-        return "Missing required data: 'image', 'control_image', or 'prompt'", 400
+    if 'control_image' not in request.files or 'prompt' not in request.form:
+        return "Missing required data: 'control_image' or 'prompt'", 400
 
     try:
-        # Получаем изображение и контрольное изображение (контур)
-        image_file = request.files['image']
+        # Получаем контрольное изображение (контур) и prompt
         control_image_file = request.files['control_image']
         prompt = request.form['prompt']
 
-        # Читаем изображения из запроса
-        init_image = Image.open(image_file)
+        # Читаем изображение из запроса
         control_image = Image.open(control_image_file)
 
-        # Сохраняем изображения во временные буферы
-        buf_image = io.BytesIO()
-        init_image.save(buf_image, format="PNG")
-        buf_image.seek(0)
-
+        # Сохраняем изображение во временный буфер
         buf_control_image = io.BytesIO()
         control_image.save(buf_control_image, format="PNG")
         buf_control_image.seek(0)
     except Exception as e:
         return f"Invalid image data: {e}", 400
 
+    # Генерируем случайный seed для каждой обработки
+    seed = random.randint(0, 1000000)
+
     # Подготовка данных для отправки в flux-canny-pro
     data_form = {
-        'seed': 965778,
-        'steps': 30,
+        'seed': seed,
+        'steps': 50,  # Увеличенные шаги для более качественного результата
         'prompt': prompt,
-        'guidance': 15,
+        'guidance': 20,  # Оптимальное значение для строгого следования prompt
         'output_format': 'jpg',
         'safety_tolerance': 2,
-        'prompt_upsampling': 'false'
+        'prompt_upsampling': True  # Используем логическое значение, а не строку
     }
 
     # Файлы для отправки
     files = {
-        'image': ('image.png', buf_image, 'image/png'),
         'control_image': ('control_image.png', buf_control_image, 'image/png')
     }
 

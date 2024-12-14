@@ -1,5 +1,5 @@
 import requests
-from tkinter import Tk, Label, Button, Canvas, filedialog, Entry, StringVar, messagebox, Frame
+from tkinter import Tk, Label, Button, Canvas, filedialog, Entry, StringVar, messagebox, Frame, Scale, HORIZONTAL
 from PIL import Image, ImageTk, ImageOps
 import io
 import base64
@@ -10,7 +10,7 @@ class ImageEditorApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Architecture Image Enhancer")
-        self.root.geometry("1300x800")  # Увеличим размер окна
+        self.root.geometry("1300x900")  # Увеличим размер окна
 
         self.image = None
         self.canny_image = None  # Для хранения контурного изображения
@@ -35,13 +35,19 @@ class ImageEditorApp:
 
         Label(root, text="Prompt:", font=("Arial", 12)).pack()
         self.prompt_var = StringVar()
-        self.prompt_var.set("A photorealistic, ultra-detailed, high-resolution image house surrounded by trees and a rocky lakeshore, warm natural lighting, cinematic atmosphere, ultra-sharp focus, studio-quality rendering.")
+        self.prompt_var.set("A photorealistic, ultra-detailed, high-resolution image of a house surrounded by trees and a rocky lakeshore, warm natural lighting, cinematic atmosphere, ultra-sharp focus, studio-quality rendering.")
         Entry(root, textvariable=self.prompt_var, width=50).pack(pady=5)
 
         Label(root, text="Negative Prompt:", font=("Arial", 12)).pack()
         self.negative_prompt_var = StringVar()
         self.negative_prompt_var.set("cartoon, low-quality, unrealistic")
         Entry(root, textvariable=self.negative_prompt_var, width=50).pack(pady=5)
+
+        # Слайдер для регулировки толщины линий
+        Label(root, text="Толщина линий (после Canny):", font=("Arial", 12)).pack(pady=5)
+        self.thickness_scale = Scale(root, from_=1, to=10, orient=HORIZONTAL, length=400)
+        self.thickness_scale.set(1)  # По умолчанию 1 (без утолщения)
+        self.thickness_scale.pack(pady=5)
 
         self.process_button = Button(root, text="Отправить на обработку", command=self.send_to_server, font=("Arial", 12))
         self.process_button.pack(pady=10)
@@ -86,6 +92,12 @@ class ImageEditorApp:
         gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
         # Применим Canny
         edges = cv2.Canny(gray, 100, 200)
+
+        # Применим утолщение линий, если указано в слайдере
+        thickness = self.thickness_scale.get()
+        if thickness > 1:
+            kernel = np.ones((thickness, thickness), np.uint8)
+            edges = cv2.dilate(edges, kernel, iterations=1)
 
         # Конвертируем обратно в PIL Image для отображения
         canny_pil = Image.fromarray(edges)

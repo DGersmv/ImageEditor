@@ -38,9 +38,9 @@ def process_image():
     # Подготовка данных для отправки в flux-canny-pro
     data_form = {
         'seed': 965778,
-        'steps': 40,
+        'steps': 50,
         'prompt': prompt,
-        'guidance': 30,
+        'guidance': 15,
         'output_format': 'jpg',
         'safety_tolerance': 2,
         'prompt_upsampling': 'true'

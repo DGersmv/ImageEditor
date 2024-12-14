@@ -10,7 +10,7 @@ class ImageEditorApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Architecture Image Enhancer")
-        self.root.geometry("1200x800")  # Увеличим размер окна
+        self.root.geometry("1300x800")  # Увеличим размер окна
 
         self.image = None
         self.canny_image = None  # Для хранения контурного изображения
@@ -35,7 +35,7 @@ class ImageEditorApp:
 
         Label(root, text="Prompt:", font=("Arial", 12)).pack()
         self.prompt_var = StringVar()
-        self.prompt_var.set("Photo of a house in a forest, photorealistic")
+        self.prompt_var.set("A photorealistic, ultra-detailed, high-resolution image house surrounded by trees and a rocky lakeshore, warm natural lighting, cinematic atmosphere, ultra-sharp focus, studio-quality rendering.")
         Entry(root, textvariable=self.prompt_var, width=50).pack(pady=5)
 
         Label(root, text="Negative Prompt:", font=("Arial", 12)).pack()

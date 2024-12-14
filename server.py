@@ -40,7 +40,7 @@ def process_image():
         'guidance': 30,
         'output_format': 'jpg',
         'safety_tolerance': 2,
-        'prompt_upsampling': 'false'
+        'prompt_upsampling': 'true'
     }
 
     # Передаём наше изображение как файл 'control_image'

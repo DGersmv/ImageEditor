@@ -1,6 +1,7 @@
-from flask import Flask, request, send_file, jsonify
+from flask import Flask, request, send_file
 from PIL import Image
-import io, base64, requests
+import io
+import requests
 
 app = Flask(__name__)
 
@@ -9,30 +10,32 @@ SEGMIND_ENDPOINT = "https://api.segmind.com/v1/flux-canny-pro"
 
 @app.route('/process_image', methods=['POST'])
 def process_image():
-    data = request.get_json()
-    if not data or 'image' not in data or 'prompt' not in data:
-        return "Missing data", 400
+    # Проверяем наличие данных от клиента
+    if 'image' not in request.files or 'control_image' not in request.files or 'prompt' not in request.form:
+        return "Missing required data: 'image', 'control_image', or 'prompt'", 400
 
-    image_b64 = data['image']
-    prompt = data['prompt']
-    # Для flux-canny-pro пример не использует negative_prompt или сложные параметры
-    # Можно их убрать или оставить по вашему усмотрению, но лучше убрать для начала.
-    
     try:
-        image_data = base64.b64decode(image_b64)
-        init_image = Image.open(io.BytesIO(image_data))
+        # Получаем изображение и контрольное изображение (контур)
+        image_file = request.files['image']
+        control_image_file = request.files['control_image']
+        prompt = request.form['prompt']
+
+        # Читаем изображения из запроса
+        init_image = Image.open(image_file)
+        control_image = Image.open(control_image_file)
+
+        # Сохраняем изображения во временные буферы
+        buf_image = io.BytesIO()
+        init_image.save(buf_image, format="PNG")
+        buf_image.seek(0)
+
+        buf_control_image = io.BytesIO()
+        control_image.save(buf_control_image, format="PNG")
+        buf_control_image.seek(0)
     except Exception as e:
-        return f"Invalid image: {e}", 400
+        return f"Invalid image data: {e}", 400
 
-    # Сохраняем изображение во временный буфер для передачи как файл:
-    buf = io.BytesIO()
-    init_image.save(buf, format="PNG")
-    buf.seek(0)
-
-    # Параметры согласно примеру с 'flux-canny-pro':
-    # В примере нет упоминания image как base64, а используется либо file, либо URI для control_image.
-    # Мы отправим наше изображение как control_image (файл).
-    
+    # Подготовка данных для отправки в flux-canny-pro
     data_form = {
         'seed': 965778,
         'steps': 40,
@@ -43,28 +46,31 @@ def process_image():
         'prompt_upsampling': 'true'
     }
 
-    # Передаём наше изображение как файл 'control_image'
+    # Файлы для отправки
     files = {
-        'control_image': ('control_image.png', buf, 'image/png')
+        'image': ('image.png', buf_image, 'image/png'),
+        'control_image': ('control_image.png', buf_control_image, 'image/png')
     }
 
     headers = {
         'x-api-key': API_KEY
     }
 
+    # Отправляем запрос на Segmind API
     try:
         seg_response = requests.post(SEGMIND_ENDPOINT, data=data_form, files=files, headers=headers, timeout=120)
         seg_response.raise_for_status()
     except requests.exceptions.RequestException as e:
         return f"Error contacting Segmind: {e}", 500
 
+    # Получаем результат обработки
     result_img_data = seg_response.content
-    # Проверяем, можем ли открыть изображение:
     try:
-        Image.open(io.BytesIO(result_img_data))
+        result_image = Image.open(io.BytesIO(result_img_data))
     except Exception as e:
         return f"Segmind returned invalid image: {e}", 500
 
+    # Возвращаем результат обратно клиенту
     return send_file(io.BytesIO(result_img_data), mimetype='image/jpeg')
 
 if __name__ == "__main__":
